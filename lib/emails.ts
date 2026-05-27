@@ -1,15 +1,21 @@
-export type EmailType = 'welcome' | 'appointment_confirmed' | 'appointment_status' | 'new_record';
+export type EmailType = 'welcome' | 'appointment_confirmed' | 'appointment_status' | 'appointment_reminder' | 'new_record' | 'request_received' | 'request_decision';
 
 interface WelcomeData { name: string }
 interface AppointmentConfirmedData { name: string; date: string; time: string; type: string; notes: string }
 interface AppointmentStatusData { name: string; date: string; time: string; status: string }
+interface AppointmentReminderData { name: string; date: string; time: string; type: string; notes: string }
 interface NewRecordData { name: string; date: string; diagnosis: string; followUp: string }
+interface RequestReceivedData { name: string; type: string; preferredDate: string; preferredTime: string }
+interface RequestDecisionData { name: string; type: string; preferredDate: string; decision: 'approved' | 'rejected'; notes?: string }
 
 export type EmailData =
   | { type: 'welcome'; data: WelcomeData }
   | { type: 'appointment_confirmed'; data: AppointmentConfirmedData }
   | { type: 'appointment_status'; data: AppointmentStatusData }
-  | { type: 'new_record'; data: NewRecordData };
+  | { type: 'appointment_reminder'; data: AppointmentReminderData }
+  | { type: 'new_record'; data: NewRecordData }
+  | { type: 'request_received'; data: RequestReceivedData }
+  | { type: 'request_decision'; data: RequestDecisionData };
 
 function base(title: string, body: string) {
   return `<!DOCTYPE html>
@@ -121,6 +127,27 @@ export function renderEmail(payload: EmailData): { subject: string; html: string
         `),
       };
     }
+    case 'appointment_reminder': {
+      const { name, date, time, type, notes } = payload.data;
+      return {
+        subject: `Reminder: Your appointment is on ${date} at ${time}`,
+        html: base('Appointment Reminder', `
+          <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:14px 18px;margin-bottom:24px">
+            <p style="margin:0;color:#92400e;font-size:14px;font-weight:600">&#x23F0;&nbsp; You have an upcoming appointment</p>
+          </div>
+          <p style="color:#475569;font-size:15px;line-height:1.6;margin:0 0 24px">
+            Hi ${name}, this is a friendly reminder about your upcoming appointment.
+          </p>
+          <table style="width:100%;border-collapse:collapse;margin-bottom:24px">
+            ${infoRow('Date', date)}
+            ${infoRow('Time', time)}
+            ${infoRow('Type', pill(type))}
+            ${notes ? infoRow('Notes', notes) : ''}
+          </table>
+          <p style="color:#475569;font-size:14px;margin:0">Please arrive 10 minutes early. To reschedule, contact our clinic as soon as possible.</p>
+        `),
+      };
+    }
     case 'new_record': {
       const { name, date, diagnosis, followUp } = payload.data;
       return {
@@ -135,6 +162,48 @@ export function renderEmail(payload: EmailData): { subject: string; html: string
             ${followUp ? infoRow('Follow-up', followUp) : ''}
           </table>
           <p style="color:#475569;font-size:14px;margin:0">Log in to your patient portal to view the full record including treatment notes and medications.</p>
+        `),
+      };
+    }
+    case 'request_received': {
+      const { name, type, preferredDate, preferredTime } = payload.data;
+      return {
+        subject: 'Your appointment request has been received',
+        html: base('Request Received', `
+          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:14px 18px;margin-bottom:24px">
+            <p style="margin:0;color:#1e40af;font-size:14px;font-weight:600">&#x23F3;&nbsp; Your request is being reviewed</p>
+          </div>
+          <p style="color:#475569;font-size:15px;line-height:1.6;margin:0 0 24px">
+            Hi ${name}, we have received your appointment request. Our team will review it shortly and confirm your slot.
+          </p>
+          <table style="width:100%;border-collapse:collapse;margin-bottom:24px">
+            ${infoRow('Type', pill(type))}
+            ${infoRow('Preferred date', preferredDate)}
+            ${infoRow('Preferred time', preferredTime)}
+          </table>
+          <p style="color:#475569;font-size:14px;margin:0">You will receive another email once your request has been reviewed.</p>
+        `),
+      };
+    }
+    case 'request_decision': {
+      const { name, type, preferredDate, decision, notes } = payload.data;
+      const approved = decision === 'approved';
+      return {
+        subject: approved ? 'Your appointment request has been approved' : 'Update on your appointment request',
+        html: base(approved ? 'Request Approved' : 'Request Update', `
+          <div style="background:${approved ? '#f0fdf4' : '#fef2f2'};border:1px solid ${approved ? '#bbf7d0' : '#fecaca'};border-radius:8px;padding:14px 18px;margin-bottom:24px">
+            <p style="margin:0;color:${approved ? '#166534' : '#991b1b'};font-size:14px;font-weight:600">${approved ? '&#x2713;&nbsp; Approved — your appointment is confirmed' : '&#x2715;&nbsp; Request not approved at this time'}</p>
+          </div>
+          <p style="color:#475569;font-size:15px;line-height:1.6;margin:0 0 24px">
+            Hi ${name}, here is an update on your appointment request.
+          </p>
+          <table style="width:100%;border-collapse:collapse;margin-bottom:24px">
+            ${infoRow('Type', pill(type))}
+            ${infoRow('Requested date', preferredDate)}
+            ${infoRow('Decision', pill(decision, approved ? '#f0fdf4' : '#fef2f2', approved ? '#166534' : '#991b1b'))}
+            ${notes ? infoRow('Notes', notes) : ''}
+          </table>
+          <p style="color:#475569;font-size:14px;margin:0">${approved ? 'Please check your portal for your confirmed appointment details.' : 'Please contact the clinic or submit a new request if you need to reschedule.'}</p>
         `),
       };
     }
