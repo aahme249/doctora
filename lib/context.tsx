@@ -1,13 +1,14 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Patient, Appointment, MedicalRecord } from './types';
+import { Patient, Appointment, MedicalRecord, AppointmentRequest } from './types';
 import { samplePatients, sampleAppointments, sampleRecords } from './data';
 
 interface AppContextType {
   patients: Patient[];
   appointments: Appointment[];
   records: MedicalRecord[];
+  appointmentRequests: AppointmentRequest[];
   addPatient: (p: Omit<Patient, 'id' | 'createdAt'>) => void;
   updatePatient: (id: string, updates: Partial<Patient>) => void;
   deletePatient: (id: string) => void;
@@ -17,6 +18,9 @@ interface AppContextType {
   addRecord: (r: Omit<MedicalRecord, 'id' | 'createdAt'>) => void;
   updateRecord: (id: string, updates: Partial<MedicalRecord>) => void;
   deleteRecord: (id: string) => void;
+  addAppointmentRequest: (r: Omit<AppointmentRequest, 'id' | 'createdAt'>) => string;
+  updateAppointmentRequest: (id: string, updates: Partial<AppointmentRequest>) => void;
+  deleteAppointmentRequest: (id: string) => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -29,6 +33,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [records, setRecords] = useState<MedicalRecord[]>([]);
+  const [appointmentRequests, setAppointmentRequests] = useState<AppointmentRequest[]>([]);
 
   useEffect(() => {
     const stored = localStorage.getItem('doctora_data');
@@ -37,6 +42,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setPatients(data.patients ?? samplePatients);
       setAppointments(data.appointments ?? sampleAppointments);
       setRecords(data.records ?? sampleRecords);
+      setAppointmentRequests(data.appointmentRequests ?? []);
     } else {
       setPatients(samplePatients);
       setAppointments(sampleAppointments);
@@ -46,9 +52,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (patients.length || appointments.length || records.length) {
-      localStorage.setItem('doctora_data', JSON.stringify({ patients, appointments, records }));
+      localStorage.setItem('doctora_data', JSON.stringify({ patients, appointments, records, appointmentRequests }));
     }
-  }, [patients, appointments, records]);
+  }, [patients, appointments, records, appointmentRequests]);
 
   const addPatient = (p: Omit<Patient, 'id' | 'createdAt'>) => {
     setPatients(prev => [...prev, { ...p, id: generateId(), createdAt: new Date().toISOString() }]);
@@ -80,12 +86,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setRecords(prev => prev.filter(r => r.id !== id));
   };
 
+  const addAppointmentRequest = (r: Omit<AppointmentRequest, 'id' | 'createdAt'>) => {
+    const id = generateId();
+    setAppointmentRequests(prev => [...prev, { ...r, id, createdAt: new Date().toISOString() }]);
+    return id;
+  };
+  const updateAppointmentRequest = (id: string, updates: Partial<AppointmentRequest>) => {
+    setAppointmentRequests(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
+  };
+  const deleteAppointmentRequest = (id: string) => {
+    setAppointmentRequests(prev => prev.filter(r => r.id !== id));
+  };
+
   return (
     <AppContext.Provider value={{
-      patients, appointments, records,
+      patients, appointments, records, appointmentRequests,
       addPatient, updatePatient, deletePatient,
       addAppointment, updateAppointment, deleteAppointment,
       addRecord, updateRecord, deleteRecord,
+      addAppointmentRequest, updateAppointmentRequest, deleteAppointmentRequest,
     }}>
       {children}
     </AppContext.Provider>

@@ -2,6 +2,8 @@ export type BloodType = 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-';
 export type Gender = 'Male' | 'Female' | 'Other';
 export type AppointmentStatus = 'scheduled' | 'completed' | 'cancelled' | 'no-show';
 export type AppointmentType = 'consultation' | 'follow-up' | 'check-up' | 'emergency' | 'procedure';
+export type RequestStatus = 'pending' | 'approved' | 'rejected';
+export type RequestUrgency = 'low' | 'normal' | 'urgent';
 
 export interface Patient {
   id: string;
@@ -27,6 +29,31 @@ export interface Appointment {
   status: AppointmentStatus;
   notes: string;
   createdAt: string;
+}
+
+export interface AgentAnalysis {
+  intakeNotes: string;
+  schedulingSuggestion: string;
+  triagePriority: string;
+  supervisorSummary: string;
+  appointmentNotes?: string;
+}
+
+export interface AppointmentRequest {
+  id: string;
+  patientId: string;
+  patientName: string;
+  preferredDate: string;
+  preferredTime: string;
+  type: AppointmentType;
+  reason: string;
+  urgency: RequestUrgency;
+  status: RequestStatus;
+  agentAnalysis?: AgentAnalysis;
+  agentStatus: 'pending' | 'running' | 'done' | 'error';
+  reviewNotes?: string;
+  createdAt: string;
+  reviewedAt?: string;
 }
 
 export interface MedicalRecord {
