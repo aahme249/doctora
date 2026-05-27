@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { renderEmail, EmailData } from '@/lib/emails';
+import nodemailer from 'nodemailer';
 
 export async function POST(req: NextRequest) {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey || apiKey === 're_your_api_key_here') {
-    // Email not configured — silently succeed so the rest of the app works
+  const user = process.env.GMAIL_USER;
+  const pass = process.env.GMAIL_APP_PASSWORD;
+
+  if (!user || !pass) {
     return NextResponse.json({ ok: true, skipped: true });
   }
 
@@ -14,18 +16,21 @@ export async function POST(req: NextRequest) {
   }
 
   const { subject, html } = renderEmail(body.payload);
-  const FROM = process.env.FROM_EMAIL ?? 'onboarding@resend.dev';
+
+  const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
+    auth: { user, pass },
+  });
 
   try {
-    const { Resend } = await import('resend');
-    const resend = new Resend(apiKey);
-    const { error } = await resend.emails.send({
-      from: `Doctora Healthcare <${FROM}>`,
+    await transporter.sendMail({
+      from: `Doctora Healthcare <${user}>`,
       to: body.to,
       subject,
       html,
     });
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ ok: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
