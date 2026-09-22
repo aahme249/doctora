@@ -18,7 +18,7 @@ export default function AppointmentsPage() {
   async function handleStatusChange(apptId: string, newStatus: AppointmentStatus) {
     const appt = appointments.find(a => a.id === apptId);
     if (!appt) return;
-    updateAppointment(apptId, { status: newStatus });
+    await updateAppointment(apptId, { status: newStatus });
     const patient = patients.find(p => p.id === appt.patientId);
     if (patient?.email && newStatus !== 'scheduled') {
       sendEmail(patient.email, {

@@ -3,9 +3,10 @@
 import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useApp } from '@/lib/context';
+import { ApiError } from '@/lib/apiClient';
 import Header from '@/components/Header';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { sendEmail } from '@/lib/sendEmail';
 import { format } from 'date-fns';
 
@@ -25,30 +26,39 @@ function NewRecordForm() {
     notes: '',
     followUp: '',
   });
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
 
   function set(field: string, value: string) {
     setForm(f => ({ ...f, [field]: value }));
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const patient = patients.find(p => p.id === form.patientId);
     if (!patient) return;
-    addRecord({ ...form, patientName: patient.name });
-    if (patient.email) {
-      sendEmail(patient.email, {
-        type: 'new_record',
-        data: {
-          name: patient.name,
-          date: format(new Date(form.date + 'T00:00:00'), 'MMMM d, yyyy'),
-          diagnosis: form.diagnosis,
-          followUp: form.followUp
-            ? format(new Date(form.followUp + 'T00:00:00'), 'MMMM d, yyyy')
-            : '',
-        },
-      });
+    setError('');
+    setSaving(true);
+    try {
+      await addRecord({ ...form, patientName: patient.name });
+      if (patient.email) {
+        sendEmail(patient.email, {
+          type: 'new_record',
+          data: {
+            name: patient.name,
+            date: format(new Date(form.date + 'T00:00:00'), 'MMMM d, yyyy'),
+            diagnosis: form.diagnosis,
+            followUp: form.followUp
+              ? format(new Date(form.followUp + 'T00:00:00'), 'MMMM d, yyyy')
+              : '',
+          },
+        });
+      }
+      router.push('/records');
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Failed to save record.');
+      setSaving(false);
     }
-    router.push('/records');
   }
 
   return (
@@ -109,12 +119,19 @@ function NewRecordForm() {
             className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
+        {error && (
+          <div className="flex items-center gap-2 text-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-3 text-sm">
+            <AlertCircle size={15} className="shrink-0" />{error}
+          </div>
+        )}
+
         <div className="flex gap-3 pt-2">
           <Link href="/records" className="flex-1 text-center px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50">
             Cancel
           </Link>
-          <button type="submit" className="flex-1 bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700">
-            Save Record
+          <button type="submit" disabled={saving}
+            className="flex-1 bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed">
+            {saving ? 'Saving…' : 'Save Record'}
           </button>
         </div>
       </form>

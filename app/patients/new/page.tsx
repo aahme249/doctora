@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/context';
+import { ApiError } from '@/lib/apiClient';
 import Header from '@/components/Header';
-import { ArrowLeft, Plus, X } from 'lucide-react';
+import { ArrowLeft, AlertCircle, Plus, X } from 'lucide-react';
 import Link from 'next/link';
 import { BloodType, Gender } from '@/lib/types';
 
@@ -19,6 +20,8 @@ export default function NewPatientPage() {
   });
   const [allergyInput, setAllergyInput] = useState('');
   const [conditionInput, setConditionInput] = useState('');
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
 
   function set(field: string, value: string) {
     setForm(f => ({ ...f, [field]: value }));
@@ -36,10 +39,17 @@ export default function NewPatientPage() {
     setForm(f => ({ ...f, [field]: f[field].filter(v => v !== val) }));
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    addPatient(form);
-    router.push('/patients');
+    setError('');
+    setSaving(true);
+    try {
+      await addPatient(form);
+      router.push('/patients');
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Failed to add patient.');
+      setSaving(false);
+    }
   }
 
   return (
@@ -143,12 +153,19 @@ export default function NewPatientPage() {
               </div>
             </div>
 
+            {error && (
+              <div className="flex items-center gap-2 text-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-3 text-sm">
+                <AlertCircle size={15} className="shrink-0" />{error}
+              </div>
+            )}
+
             <div className="flex gap-3 pt-2">
               <Link href="/patients" className="flex-1 text-center px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50">
                 Cancel
               </Link>
-              <button type="submit" className="flex-1 bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700">
-                Add Patient
+              <button type="submit" disabled={saving}
+                className="flex-1 bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed">
+                {saving ? 'Adding…' : 'Add Patient'}
               </button>
             </div>
           </form>

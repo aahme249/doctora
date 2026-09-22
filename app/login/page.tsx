@@ -17,8 +17,7 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     setLoading(true);
-    await new Promise(r => setTimeout(r, 500));
-    const result = login(email, password);
+    const result = await login(email, password);
     if (!result.ok) {
       setError(result.error ?? 'Invalid credentials.');
       setLoading(false);

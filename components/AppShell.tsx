@@ -6,9 +6,9 @@ import { useAuth } from '@/lib/auth';
 import Sidebar from './Sidebar';
 import PatientSidebar from './PatientSidebar';
 
-const PUBLIC_PATHS = ['/login', '/register'];
-// /register handles its own post-auth redirect (shows success screen first)
-const REDIRECT_EXCLUDED = ['/register'];
+const PUBLIC_PATHS = ['/login', '/register', '/accept-invite'];
+// /register and /accept-invite handle their own post-auth redirect (show a success screen first)
+const REDIRECT_EXCLUDED = ['/register', '/accept-invite'];
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user, logout } = useAuth();

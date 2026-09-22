@@ -1,18 +1,45 @@
 'use client';
 
-import { use } from 'react';
+import { use, useState } from 'react';
 import { useApp } from '@/lib/context';
+import { apiFetch, ApiError } from '@/lib/apiClient';
 import Header from '@/components/Header';
 import StatusBadge from '@/components/StatusBadge';
-import { ArrowLeft, Phone, Mail, MapPin, Calendar, FileText, Plus } from 'lucide-react';
+import { ArrowLeft, Phone, Mail, MapPin, Calendar, FileText, Plus, Send, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { calculateAge } from '@/lib/utils';
 
 export default function PatientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { patients, appointments, records } = useApp();
+  const { patients, appointments, records, isLoading } = useApp();
   const patient = patients.find(p => p.id === id);
+  const [inviteState, setInviteState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [inviteError, setInviteError] = useState('');
+
+  async function handleInvite() {
+    if (!patient) return;
+    setInviteState('sending');
+    setInviteError('');
+    try {
+      await apiFetch('/api/invites', { method: 'POST', body: JSON.stringify({ patientId: patient.id }) });
+      setInviteState('sent');
+    } catch (err) {
+      setInviteError(err instanceof ApiError ? err.message : 'Failed to send invite.');
+      setInviteState('error');
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col flex-1">
+        <Header title="Loading…" />
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-gray-400 text-sm">Loading patient…</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!patient) {
     return (
@@ -53,8 +80,35 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                 <span className="flex items-center gap-1.5"><MapPin size={14} />{patient.address}</span>
               </div>
             </div>
-            <span className="bg-red-50 text-red-700 font-bold px-3 py-1.5 rounded-lg text-sm shrink-0">{patient.bloodType}</span>
+            <div className="flex flex-col items-end gap-2 shrink-0">
+              <span className="bg-red-50 text-red-700 font-bold px-3 py-1.5 rounded-lg text-sm">{patient.bloodType}</span>
+              {!patient.hasAccount && (
+                inviteState === 'sent' ? (
+                  <span className="flex items-center gap-1.5 text-xs text-green-700 font-medium">
+                    <CheckCircle size={13} /> Invite sent
+                  </span>
+                ) : (
+                  <button
+                    onClick={handleInvite}
+                    disabled={inviteState === 'sending'}
+                    className="flex items-center gap-1.5 text-xs text-blue-600 font-medium hover:underline disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    <Send size={12} /> {inviteState === 'sending' ? 'Sending…' : 'Invite to Portal'}
+                  </button>
+                )
+              )}
+            </div>
           </div>
+
+          {inviteState === 'error' && (
+            <p className="text-xs text-red-600 mt-2">{inviteError}</p>
+          )}
+
+          {patient.hasAccount && (
+            <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-4 py-2.5 text-sm text-green-700 font-medium mt-4">
+              <CheckCircle size={15} /> Invitation accepted — this patient has an active portal account.
+            </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 pt-6 border-t border-gray-100">
             <div>

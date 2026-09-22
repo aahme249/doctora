@@ -31,14 +31,14 @@ export default function RequestsPage() {
     const notes = reviewNotes[request.id] ?? '';
     const now = new Date().toISOString();
 
-    updateAppointmentRequest(request.id, {
+    await updateAppointmentRequest(request.id, {
       status: decision as RequestStatus,
       reviewNotes: notes,
       reviewedAt: now,
     });
 
     if (decision === 'approved') {
-      addAppointment({
+      await addAppointment({
         patientId: request.patientId,
         patientName: request.patientName,
         date: request.preferredDate,

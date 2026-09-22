@@ -17,6 +17,7 @@ export interface Patient {
   allergies: string[];
   conditions: string[];
   createdAt: string;
+  hasAccount?: boolean;
 }
 
 export interface Appointment {

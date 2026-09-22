@@ -2,8 +2,6 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth';
-import { useApp } from '@/lib/context';
-import { sendEmail } from '@/lib/sendEmail';
 import { useRouter } from 'next/navigation';
 import { Stethoscope, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
@@ -11,7 +9,6 @@ import { BloodType, Gender } from '@/lib/types';
 
 export default function RegisterPage() {
   const { registerPatient } = useAuth();
-  const { addPatient } = useApp();
   const router = useRouter();
 
   const [form, setForm] = useState({
@@ -43,10 +40,14 @@ export default function RegisterPage() {
 
     setLoading(true);
 
-    const result = registerPatient({
+    const result = await registerPatient({
       email: form.email,
       password: form.password,
       name: form.name,
+      dateOfBirth: form.dateOfBirth || '2000-01-01',
+      gender: form.gender,
+      phone: form.phone,
+      bloodType: form.bloodType,
     });
 
     if (!result.ok) {
@@ -54,22 +55,6 @@ export default function RegisterPage() {
       setLoading(false);
       return;
     }
-
-    // Create the linked patient record immediately
-    addPatient({
-      name: form.name,
-      dateOfBirth: form.dateOfBirth || '2000-01-01',
-      gender: form.gender,
-      phone: form.phone,
-      email: form.email,
-      address: '',
-      bloodType: form.bloodType,
-      allergies: [],
-      conditions: [],
-    });
-
-    // Send welcome email (non-blocking)
-    sendEmail(form.email, { type: 'welcome', data: { name: form.name } });
 
     setSuccess(true);
     setLoading(false);
