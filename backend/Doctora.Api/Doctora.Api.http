@@ -1,0 +1,26 @@
+@Doctora.Api_HostAddress = http://localhost:5289
+
+GET {{Doctora.Api_HostAddress}}/api/patients
+Accept: application/json
+
+###
+
+GET {{Doctora.Api_HostAddress}}/api/appointments
+Accept: application/json
+
+###
+
+GET {{Doctora.Api_HostAddress}}/api/records
+Accept: application/json
+
+###
+
+GET {{Doctora.Api_HostAddress}}/api/appointment-requests
+Accept: application/json
+
+###
+
+POST {{Doctora.Api_HostAddress}}/api/seed
+Accept: application/json
+
+###
