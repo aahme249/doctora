@@ -5,7 +5,7 @@ import { useApp } from '@/lib/context';
 import Header from '@/components/Header';
 import StatusBadge from '@/components/StatusBadge';
 import Link from 'next/link';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Video } from 'lucide-react';
 import { format } from 'date-fns';
 import { sendEmail } from '@/lib/sendEmail';
 import { AppointmentStatus } from '@/lib/types';
@@ -111,6 +111,12 @@ export default function AppointmentsPage() {
                     <td className="px-5 py-3.5 text-gray-600">
                       <p>{format(new Date(appt.date + 'T00:00:00'), 'MMM d, yyyy')}</p>
                       <p className="text-xs text-gray-400">{appt.time}</p>
+                      {appt.meetingUrl && (
+                        <a href={appt.meetingUrl} target="_blank" rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-xs text-blue-600 hover:underline mt-0.5">
+                          <Video size={11} /> Join
+                        </a>
+                      )}
                     </td>
                     <td className="px-5 py-3.5 hidden sm:table-cell"><StatusBadge value={appt.type} /></td>
                     <td className="px-5 py-3.5">

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Doctora.Api.Data;
 using Doctora.Api.Models;
+using Doctora.Api.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Doctora.Api.Endpoints;
@@ -54,20 +55,38 @@ public static class CrudEndpoints
             var ownId = OwnPatientId(user);
             return await db.Appointments.Where(a => a.PatientId == ownId).ToListAsync();
         });
-        appointments.MapPost("/", async (Appointment appointment, DoctoraDbContext db) =>
+        appointments.MapPost("/", async (Appointment appointment, bool? withMeet, GoogleCalendarService calendar, DoctoraDbContext db) =>
         {
+            if (withMeet == true && calendar.IsConfigured)
+            {
+                var topic = $"{appointment.PatientName} - {appointment.Type}";
+                appointment.MeetingUrl = await calendar.CreateMeetingAsync(topic, appointment.Date, appointment.Time);
+            }
             db.Appointments.Add(appointment);
             await db.SaveChangesAsync();
             return Results.Ok(appointment);
         }).RequireAuthorization("DoctorOnly");
-        appointments.MapPatch("/{id}", async (string id, AppointmentUpdate updates, DoctoraDbContext db) =>
+        appointments.MapPatch("/{id}", async (string id, AppointmentUpdate updates, ClaimsPrincipal user, DoctoraDbContext db) =>
         {
             var appointment = await db.Appointments.FindAsync(id);
             if (appointment is null) return Results.NotFound();
-            updates.ApplyTo(appointment);
+
+            if (IsDoctor(user))
+            {
+                updates.ApplyTo(appointment);
+            }
+            else
+            {
+                // Patients may only cancel their own appointment — nothing else.
+                var isOwnAppointment = appointment.PatientId == OwnPatientId(user);
+                var isCancelOnly = updates.IsStatusOnly && updates.Status == "cancelled";
+                if (!isOwnAppointment || !isCancelOnly) return Results.Forbid();
+                appointment.Status = "cancelled";
+            }
+
             await db.SaveChangesAsync();
             return Results.Ok(appointment);
-        }).RequireAuthorization("DoctorOnly");
+        });
         appointments.MapDelete("/{id}", async (string id, DoctoraDbContext db) =>
         {
             await db.Appointments.Where(a => a.Id == id).ExecuteDeleteAsync();

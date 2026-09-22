@@ -1,9 +1,9 @@
 export type EmailType = 'welcome' | 'appointment_confirmed' | 'appointment_status' | 'appointment_reminder' | 'new_record' | 'request_received' | 'request_decision';
 
 interface WelcomeData { name: string }
-interface AppointmentConfirmedData { name: string; date: string; time: string; type: string; notes: string }
+interface AppointmentConfirmedData { name: string; date: string; time: string; type: string; notes: string; meetingUrl?: string }
 interface AppointmentStatusData { name: string; date: string; time: string; status: string }
-interface AppointmentReminderData { name: string; date: string; time: string; type: string; notes: string }
+interface AppointmentReminderData { name: string; date: string; time: string; type: string; notes: string; meetingUrl?: string }
 interface NewRecordData { name: string; date: string; diagnosis: string; followUp: string }
 interface RequestReceivedData { name: string; type: string; preferredDate: string; preferredTime: string }
 interface RequestDecisionData { name: string; type: string; preferredDate: string; decision: 'approved' | 'rejected'; notes?: string }

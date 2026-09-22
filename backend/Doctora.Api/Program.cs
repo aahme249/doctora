@@ -7,15 +7,17 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var rawConnectionString = builder.Configuration["DATABASE_URL"]
+string? rawConnectionString = builder.Configuration["DATABASE_URL"]
     ?? builder.Configuration.GetConnectionString("DoctoraDb")
     ?? throw new InvalidOperationException("DATABASE_URL is not configured.");
 
 builder.Services.AddDbContext<DoctoraDbContext>(options =>
     options.UseNpgsql(ConnectionStringHelper.ToNpgsqlConnectionString(rawConnectionString)));
 
+builder.Services.AddHttpClient();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<JwtService>();
+builder.Services.AddScoped<GoogleCalendarService>();
 builder.Services.AddHostedService<AppointmentReminderService>();
 
 builder.Services.AddOpenApi();
@@ -37,6 +39,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     {
         options.MapInboundClaims = false;
         options.TokenValidationParameters = new JwtService(builder.Configuration).ValidationParameters;
+        options.Events = new JwtBearerEvents
+        {
+            // /api/google/connect is reached via a plain browser navigation (so Google can
+            // redirect back), which can't set an Authorization header — accept the token
+            // as a query string param for that one route instead.
+            OnMessageReceived = context =>
+            {
+                if (context.HttpContext.Request.Path.StartsWithSegments("/api/google/connect"))
+                {
+                    var token = context.Request.Query["access_token"];
+                    if (!string.IsNullOrEmpty(token)) context.Token = token;
+                }
+                return Task.CompletedTask;
+            },
+        };
     });
 
 builder.Services.AddAuthorization(options =>
@@ -61,6 +78,8 @@ app.MapCrudEndpoints();
 app.MapEmailEndpoints();
 app.MapSeedEndpoints();
 app.MapInviteEndpoints();
+app.MapMessageEndpoints();
+app.MapGoogleOAuthEndpoints();
 
 using (var scope = app.Services.CreateScope())
 {
@@ -90,6 +109,22 @@ using (var scope = app.Services.CreateScope())
 
     await db.Database.ExecuteSqlRawAsync(
         "ALTER TABLE appointments ADD COLUMN IF NOT EXISTS reminder_sent boolean NOT NULL DEFAULT false");
+    await db.Database.ExecuteSqlRawAsync(
+        "ALTER TABLE appointments ADD COLUMN IF NOT EXISTS meeting_url text");
+    await db.Database.ExecuteSqlRawAsync(
+        "ALTER TABLE accounts ADD COLUMN IF NOT EXISTS google_refresh_token text");
+
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS messages (
+          id text PRIMARY KEY,
+          patient_id text NOT NULL,
+          sender_role text NOT NULL,
+          body text NOT NULL,
+          created_at text NOT NULL
+        )
+        """);
+    await db.Database.ExecuteSqlRawAsync(
+        "ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_read boolean NOT NULL DEFAULT false");
 
     if (!await db.Accounts.AnyAsync(a => a.Role == "doctor"))
     {

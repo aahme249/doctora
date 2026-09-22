@@ -1,15 +1,38 @@
 'use client';
 
 import { Bell, Search } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useApp } from '@/lib/context';
+import { useAuth } from '@/lib/auth';
+import { apiFetch } from '@/lib/apiClient';
 import { useRouter } from 'next/navigation';
+
+const POLL_INTERVAL_MS = 15000;
 
 export default function Header({ title }: { title: string }) {
   const [query, setQuery] = useState('');
   const [showResults, setShowResults] = useState(false);
   const { patients } = useApp();
+  const { user } = useAuth();
   const router = useRouter();
+
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchUnread = useCallback(() => {
+    apiFetch<{ count: number }>('/api/messages/unread-count')
+      .then(res => setUnreadCount(res.count))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetchUnread();
+    const interval = setInterval(fetchUnread, POLL_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [fetchUnread]);
+
+  function goToMessages() {
+    router.push(user?.role === 'doctor' ? '/messages' : '/portal/messages');
+  }
 
   const results = query.length > 1
     ? patients.filter(p => p.name.toLowerCase().includes(query.toLowerCase())).slice(0, 5)
@@ -45,9 +68,13 @@ export default function Header({ title }: { title: string }) {
         )}
       </div>
 
-      <button className="relative p-2 rounded-lg hover:bg-gray-100">
+      <button onClick={goToMessages} className="relative p-2 rounded-lg hover:bg-gray-100">
         <Bell size={20} className="text-gray-600" />
-        <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
+        {unreadCount > 0 && (
+          <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 px-1 bg-red-500 rounded-full text-[10px] text-white font-bold flex items-center justify-center">
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </span>
+        )}
       </button>
     </header>
   );

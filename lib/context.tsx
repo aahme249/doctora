@@ -14,7 +14,7 @@ interface AppContextType {
   addPatient: (p: Omit<Patient, 'id' | 'createdAt'>) => Promise<void>;
   updatePatient: (id: string, updates: Partial<Patient>) => Promise<void>;
   deletePatient: (id: string) => Promise<void>;
-  addAppointment: (a: Omit<Appointment, 'id' | 'createdAt'>) => Promise<void>;
+  addAppointment: (a: Omit<Appointment, 'id' | 'createdAt'>, opts?: { withMeet?: boolean }) => Promise<Appointment>;
   updateAppointment: (id: string, updates: Partial<Appointment>) => Promise<void>;
   deleteAppointment: (id: string) => Promise<void>;
   addRecord: (r: Omit<MedicalRecord, 'id' | 'createdAt'>) => Promise<void>;
@@ -90,10 +90,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setPatients(prev => prev.filter(p => p.id !== id));
   }, []);
 
-  const addAppointment = useCallback(async (a: Omit<Appointment, 'id' | 'createdAt'>) => {
+  const addAppointment = useCallback(async (a: Omit<Appointment, 'id' | 'createdAt'>, opts?: { withMeet?: boolean }) => {
     const appointment: Appointment = { ...a, id: generateId(), createdAt: new Date().toISOString() };
-    const created = await apiFetch<Appointment>('/api/appointments', { method: 'POST', body: JSON.stringify(appointment) });
+    const query = opts?.withMeet ? '?withMeet=true' : '';
+    const created = await apiFetch<Appointment>(`/api/appointments${query}`, { method: 'POST', body: JSON.stringify(appointment) });
     setAppointments(prev => [...prev, created]);
+    return created;
   }, []);
   const updateAppointment = useCallback(async (id: string, updates: Partial<Appointment>) => {
     const updated = await apiFetch<Appointment>(`/api/appointments/${id}`, { method: 'PATCH', body: JSON.stringify(updates) });

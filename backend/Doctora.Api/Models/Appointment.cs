@@ -12,4 +12,5 @@ public class Appointment
     public string Notes { get; set; } = "";
     public string CreatedAt { get; set; } = "";
     public bool ReminderSent { get; set; }
+    public string? MeetingUrl { get; set; }
 }

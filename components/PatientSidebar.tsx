@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Calendar, FileText, Stethoscope, Menu, X, LogOut } from 'lucide-react';
+import { LayoutDashboard, Calendar, FileText, MessageCircle, Stethoscope, Menu, X, LogOut } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth';
 
@@ -10,6 +10,7 @@ const navItems = [
   { href: '/portal', icon: LayoutDashboard, label: 'My Dashboard' },
   { href: '/portal/appointments', icon: Calendar, label: 'My Appointments' },
   { href: '/portal/records', icon: FileText, label: 'My Records' },
+  { href: '/portal/messages', icon: MessageCircle, label: 'Messages' },
 ];
 
 export default function PatientSidebar({ onLogout }: { onLogout?: () => void }) {

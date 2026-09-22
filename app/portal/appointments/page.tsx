@@ -4,6 +4,7 @@ import { useAuth } from '@/lib/auth';
 import { useApp } from '@/lib/context';
 import Header from '@/components/Header';
 import StatusBadge from '@/components/StatusBadge';
+import { Video } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function PatientAppointmentsPage() {
@@ -45,6 +46,12 @@ export default function PatientAppointmentsPage() {
                       <p className="text-gray-600">{appt.time}</p>
                     </div>
                     {appt.notes && <p className="text-sm text-gray-500">{appt.notes}</p>}
+                    {appt.meetingUrl && (
+                      <a href={appt.meetingUrl} target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 text-sm text-blue-600 hover:underline mt-1.5 font-medium">
+                        <Video size={14} /> Join Zoom Meeting
+                      </a>
+                    )}
                   </div>
                   <div className="flex flex-col items-end gap-2 shrink-0">
                     <StatusBadge value={appt.status} />

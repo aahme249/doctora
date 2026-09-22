@@ -7,4 +7,5 @@ public class Message
     public string SenderRole { get; set; } = "";
     public string Body { get; set; } = "";
     public string CreatedAt { get; set; } = "";
+    public bool IsRead { get; set; }
 }

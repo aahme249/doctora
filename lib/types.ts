@@ -30,6 +30,7 @@ export interface Appointment {
   status: AppointmentStatus;
   notes: string;
   createdAt: string;
+  meetingUrl?: string;
 }
 
 export interface AgentAnalysis {
@@ -55,6 +56,15 @@ export interface AppointmentRequest {
   reviewNotes?: string;
   createdAt: string;
   reviewedAt?: string;
+}
+
+export interface Message {
+  id: string;
+  patientId: string;
+  senderRole: 'doctor' | 'patient';
+  body: string;
+  createdAt: string;
+  isRead?: boolean;
 }
 
 export interface MedicalRecord {

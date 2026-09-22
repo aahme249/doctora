@@ -58,6 +58,14 @@ public static class EmailTemplates
         </tr>
         """;
 
+    private static string LinkButton(string url, string label) => $"""
+        <table cellpadding="0" cellspacing="0" style="margin:0 0 20px">
+          <tr><td style="background:#2563eb;border-radius:8px">
+            <a href="{url}" style="display:inline-block;padding:12px 24px;color:#fff;font-size:14px;font-weight:600;text-decoration:none">{label}</a>
+          </td></tr>
+        </table>
+        """;
+
     public static (string Subject, string Html)? Render(EmailPayload payload)
     {
         var data = payload.Data;
@@ -92,6 +100,22 @@ public static class EmailTemplates
                     <p style="color:#94a3b8;font-size:12px;margin:0">This invite link expires in 7 days. If you didn't expect this email, you can safely ignore it.</p>
                     """));
             }
+            case "new_message":
+            {
+                var recipientName = Str(data, "recipientName") ?? "";
+                var senderLabel = Str(data, "senderLabel") ?? "";
+                var preview = Str(data, "preview") ?? "";
+                var link = Str(data, "link") ?? "";
+                return ($"New message from {senderLabel}", Base("New Message", $"""
+                    <p style="color:#475569;font-size:15px;line-height:1.6;margin:0 0 20px">
+                      Hi {recipientName}, you have a new message from {senderLabel} on Doctora.
+                    </p>
+                    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px 18px;margin-bottom:24px">
+                      <p style="margin:0;color:#334155;font-size:14px;font-style:italic">&ldquo;{preview}&rdquo;</p>
+                    </div>
+                    {LinkButton(link, "View Message")}
+                    """));
+            }
             case "appointment_confirmed":
             {
                 var name = Str(data, "name") ?? "";
@@ -99,6 +123,7 @@ public static class EmailTemplates
                 var time = Str(data, "time") ?? "";
                 var type = Str(data, "type") ?? "";
                 var notes = Str(data, "notes") ?? "";
+                var meetingUrl = Str(data, "meetingUrl");
                 return ($"Appointment confirmed – {date} at {time}", Base("Appointment Confirmed", $"""
                     <p style="color:#475569;font-size:15px;line-height:1.6;margin:0 0 24px">
                       Hi {name}, your appointment has been scheduled. Here are your details:
@@ -109,6 +134,7 @@ public static class EmailTemplates
                       {InfoRow("Type", Pill(type))}
                       {(string.IsNullOrEmpty(notes) ? "" : InfoRow("Notes", notes))}
                     </table>
+                    {(string.IsNullOrEmpty(meetingUrl) ? "" : LinkButton(meetingUrl, "Join Google Meet"))}
                     <p style="color:#475569;font-size:14px;margin:0">Please arrive 10 minutes early. If you need to reschedule, contact us as soon as possible.</p>
                     """));
             }
@@ -144,6 +170,7 @@ public static class EmailTemplates
                 var time = Str(data, "time") ?? "";
                 var type = Str(data, "type") ?? "";
                 var notes = Str(data, "notes") ?? "";
+                var meetingUrl = Str(data, "meetingUrl");
                 return ($"Reminder: Your appointment is on {date} at {time}", Base("Appointment Reminder", $"""
                     <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:14px 18px;margin-bottom:24px">
                       <p style="margin:0;color:#92400e;font-size:14px;font-weight:600">&#x23F0;&nbsp; You have an upcoming appointment</p>
@@ -157,6 +184,7 @@ public static class EmailTemplates
                       {InfoRow("Type", Pill(type))}
                       {(string.IsNullOrEmpty(notes) ? "" : InfoRow("Notes", notes))}
                     </table>
+                    {(string.IsNullOrEmpty(meetingUrl) ? "" : LinkButton(meetingUrl, "Join Google Meet"))}
                     <p style="color:#475569;font-size:14px;margin:0">Please arrive 10 minutes early. To reschedule, contact our clinic as soon as possible.</p>
                     """));
             }

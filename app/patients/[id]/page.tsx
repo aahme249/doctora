@@ -5,7 +5,7 @@ import { useApp } from '@/lib/context';
 import { apiFetch, ApiError } from '@/lib/apiClient';
 import Header from '@/components/Header';
 import StatusBadge from '@/components/StatusBadge';
-import { ArrowLeft, Phone, Mail, MapPin, Calendar, FileText, Plus, Send, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Phone, Mail, MapPin, Calendar, FileText, Plus, Send, CheckCircle, Video } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { calculateAge } from '@/lib/utils';
@@ -150,6 +150,12 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                       <div>
                         <p className="text-sm font-medium text-gray-800">{format(new Date(appt.date + 'T00:00:00'), 'MMM d, yyyy')} · {appt.time}</p>
                         <p className="text-xs text-gray-500 mt-0.5">{appt.notes}</p>
+                        {appt.meetingUrl && (
+                          <a href={appt.meetingUrl} target="_blank" rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-xs text-blue-600 hover:underline mt-1">
+                            <Video size={11} /> Join Zoom
+                          </a>
+                        )}
                       </div>
                       <StatusBadge value={appt.status} />
                     </div>

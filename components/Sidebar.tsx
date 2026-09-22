@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard, Users, Calendar, FileText, Stethoscope, Menu, X, LogOut
+  LayoutDashboard, Users, Calendar, FileText, MessageCircle, Stethoscope, Menu, X, LogOut
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -12,6 +12,7 @@ const navItems = [
   { href: '/patients', icon: Users, label: 'Patients' },
   { href: '/appointments', icon: Calendar, label: 'Appointments' },
   { href: '/records', icon: FileText, label: 'Medical Records' },
+  { href: '/messages', icon: MessageCircle, label: 'Messages' },
 ];
 
 export default function Sidebar({ onLogout }: { onLogout?: () => void }) {

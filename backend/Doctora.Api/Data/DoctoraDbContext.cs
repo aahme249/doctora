@@ -46,6 +46,7 @@ public class DoctoraDbContext(DbContextOptions<DoctoraDbContext> options) : DbCo
             e.Property(a => a.Notes).HasColumnName("notes");
             e.Property(a => a.CreatedAt).HasColumnName("created_at");
             e.Property(a => a.ReminderSent).HasColumnName("reminder_sent").HasDefaultValue(false);
+            e.Property(a => a.MeetingUrl).HasColumnName("meeting_url");
         });
 
         modelBuilder.Entity<MedicalRecord>(e =>
@@ -97,6 +98,7 @@ public class DoctoraDbContext(DbContextOptions<DoctoraDbContext> options) : DbCo
             e.Property(a => a.Name).HasColumnName("name");
             e.Property(a => a.PatientId).HasColumnName("patient_id");
             e.Property(a => a.CreatedAt).HasColumnName("created_at");
+            e.Property(a => a.GoogleRefreshToken).HasColumnName("google_refresh_token");
         });
 
         modelBuilder.Entity<Invite>(e =>
@@ -120,6 +122,7 @@ public class DoctoraDbContext(DbContextOptions<DoctoraDbContext> options) : DbCo
             e.Property(m => m.SenderRole).HasColumnName("sender_role");
             e.Property(m => m.Body).HasColumnName("body");
             e.Property(m => m.CreatedAt).HasColumnName("created_at");
+            e.Property(m => m.IsRead).HasColumnName("is_read").HasDefaultValue(false);
         });
     }
 }

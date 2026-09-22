@@ -10,6 +10,7 @@ import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { AppointmentType } from '@/lib/types';
 import { sendEmail } from '@/lib/sendEmail';
 import { format } from 'date-fns';
+import { Video } from 'lucide-react';
 
 function NewAppointmentForm() {
   const { patients, addAppointment } = useApp();
@@ -24,6 +25,7 @@ function NewAppointmentForm() {
     type: 'consultation' as AppointmentType,
     notes: '',
   });
+  const [withMeet, setWithMeet] = useState(true);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -38,7 +40,7 @@ function NewAppointmentForm() {
     setError('');
     setSaving(true);
     try {
-      await addAppointment({ ...form, patientName: patient.name, status: 'scheduled' });
+      const created = await addAppointment({ ...form, patientName: patient.name, status: 'scheduled' }, { withMeet });
       if (patient.email) {
         sendEmail(patient.email, {
           type: 'appointment_confirmed',
@@ -48,6 +50,7 @@ function NewAppointmentForm() {
             time: form.time,
             type: form.type,
             notes: form.notes,
+            meetingUrl: created.meetingUrl,
           },
         });
       }
@@ -101,6 +104,13 @@ function NewAppointmentForm() {
           <textarea value={form.notes} onChange={e => set('notes', e.target.value)} rows={3}
             className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
         </div>
+
+        <label className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer">
+          <input type="checkbox" checked={withMeet} onChange={e => setWithMeet(e.target.checked)}
+            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+          <Video size={15} className="text-gray-400" />
+          Create a Google Meet link for this appointment
+        </label>
 
         {error && (
           <div className="flex items-center gap-2 text-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-3 text-sm">

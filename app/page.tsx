@@ -1,10 +1,12 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useApp } from '@/lib/context';
+import { apiFetch, getToken, API_URL } from '@/lib/apiClient';
 import Header from '@/components/Header';
 import StatCard from '@/components/StatCard';
 import StatusBadge from '@/components/StatusBadge';
-import { Users, Calendar, FileText, Clock, ChevronRight } from 'lucide-react';
+import { Users, Calendar, FileText, Clock, ChevronRight, Video, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 
@@ -17,6 +19,27 @@ export default function DashboardPage() {
   const upcoming = appointments.filter(a => a.date >= today && a.status === 'scheduled');
   const recentPatients = [...patients].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 5);
 
+  const [googleConnected, setGoogleConnected] = useState<boolean | null>(null);
+  const [googleNotice, setGoogleNotice] = useState<'connected' | 'error' | null>(null);
+
+  useEffect(() => {
+    apiFetch<{ connected: boolean }>('/api/google/status')
+      .then(res => setGoogleConnected(res.connected))
+      .catch(() => setGoogleConnected(false));
+
+    const params = new URLSearchParams(window.location.search);
+    const result = params.get('google');
+    if (result === 'connected' || result === 'error') {
+      setGoogleNotice(result);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
+  function connectGoogle() {
+    const token = getToken();
+    window.location.href = `${API_URL}/api/google/connect?access_token=${encodeURIComponent(token ?? '')}`;
+  }
+
   return (
     <div className="flex flex-col flex-1 overflow-auto">
       <Header title="Dashboard" />
@@ -25,6 +48,33 @@ export default function DashboardPage() {
           <h2 className="text-xl font-bold text-gray-900">Good morning, Dr. Hassan</h2>
           <p className="text-gray-500 text-sm mt-1">{format(new Date(), 'EEEE, MMMM d, yyyy')}</p>
         </div>
+
+        {googleNotice === 'connected' && (
+          <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-4 py-2.5 text-sm text-green-700 font-medium">
+            <CheckCircle size={15} /> Google Calendar connected successfully.
+          </div>
+        )}
+        {googleNotice === 'error' && (
+          <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-4 py-2.5 text-sm text-red-700 font-medium">
+            Failed to connect Google Calendar. Please try again.
+          </div>
+        )}
+
+        {googleConnected === false && (
+          <div className="flex items-center justify-between gap-4 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+            <div className="flex items-center gap-2 text-sm text-blue-800">
+              <Video size={16} /> Connect Google Calendar to create real Google Meet links for appointments.
+            </div>
+            <button onClick={connectGoogle} className="bg-blue-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-blue-700 shrink-0">
+              Connect
+            </button>
+          </div>
+        )}
+        {googleConnected === true && (
+          <div className="flex items-center gap-2 text-sm text-green-700 font-medium">
+            <CheckCircle size={15} /> Google Calendar connected
+          </div>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           <StatCard title="Total Patients" value={patients.length} subtitle="Active records" icon={Users} color="blue" />

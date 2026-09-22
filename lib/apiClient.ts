@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5289';
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5289';
 const TOKEN_KEY = 'doctora_token';
 
 export function getToken(): string | null {

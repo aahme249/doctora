@@ -5,7 +5,7 @@ import { useApp } from '@/lib/context';
 import Header from '@/components/Header';
 import StatusBadge from '@/components/StatusBadge';
 import StatCard from '@/components/StatCard';
-import { Calendar, FileText, Clock, ChevronRight } from 'lucide-react';
+import { Calendar, FileText, Clock, ChevronRight, Video } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 
@@ -86,6 +86,12 @@ export default function PatientPortalPage() {
                           {format(new Date(appt.date + 'T00:00:00'), 'MMM d, yyyy')} · {appt.time}
                         </p>
                         <p className="text-xs text-gray-500 mt-0.5">{appt.notes || appt.type}</p>
+                        {appt.meetingUrl && (
+                          <a href={appt.meetingUrl} target="_blank" rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-xs text-blue-600 hover:underline mt-1">
+                            <Video size={11} /> Join Zoom
+                          </a>
+                        )}
                       </div>
                       <StatusBadge value={appt.type} />
                     </div>

@@ -36,6 +36,10 @@ public class AppointmentUpdate
     public string? Status { get; set; }
     public string? Notes { get; set; }
 
+    /// <summary>True if this update touches nothing besides Status — the only field a patient may self-edit.</summary>
+    public bool IsStatusOnly =>
+        PatientId is null && PatientName is null && Date is null && Time is null && Type is null && Notes is null;
+
     public void ApplyTo(Appointment a)
     {
         if (PatientId is not null) a.PatientId = PatientId;

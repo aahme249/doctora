@@ -63,6 +63,7 @@ public class AppointmentReminderService(
                     time = appt.Time,
                     type = appt.Type,
                     notes = appt.Notes,
+                    meetingUrl = appt.MeetingUrl,
                 });
                 using var doc = JsonDocument.Parse(payloadJson);
                 var rendered = EmailTemplates.Render(new EmailPayload("appointment_reminder", doc.RootElement.Clone()));
